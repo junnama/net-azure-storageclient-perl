@@ -1,0 +1,6 @@
+Revision history for Perl extension Net::Azure::StorageClient.
+
+0.1  Thu Sep 26 17:19:47 2013
+	- original version; created by h2xs 1.23 with options
+		h2xs -AX -n Net::Azure::StorageClient
+
