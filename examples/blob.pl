@@ -21,7 +21,7 @@ GetOptions(\my %options, qw/
 
 $account_name = $options{ account } unless $account_name;
 $primary_access_key = $options{ accesskey } unless $primary_access_key;
-my $method = $options{ method' };
+my $method = $options{ method };
 my $url   = $options{ url };
 my $file  = $options{ file };
 my $silence = $options{ silence };

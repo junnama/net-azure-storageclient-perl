@@ -517,7 +517,7 @@ sub upload {
                                 $data .= $chunk;
                             }
                             close $fh;
-                            $params->{ content } = $data;
+                            $params->{ contents }->{ $filename } = $data;
                             my $comp = Digest::MD5::md5_hex( $data );
                             if ( $comp eq $etag ) {
                                 push ( @not_modified_items, $file );
@@ -843,8 +843,8 @@ sub _put {
             require File::Basename;
             $filename = File::Spec->catfile( $filename, File::Basename::basename( $path ) );
         }
-        if ( $params->{ content } ) {
-            $data = $params->{ content };
+        if ( $params->{ contents }->{ $filename } ) {
+            $data = $params->{ contents }->{ $filename };
         } else {
             open my $fh, "<$filename" or die "Can't open '$filename'.";
             binmode $fh;
