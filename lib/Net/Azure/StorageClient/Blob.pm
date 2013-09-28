@@ -843,7 +843,7 @@ sub _put {
             require File::Basename;
             $filename = File::Spec->catfile( $filename, File::Basename::basename( $path ) );
         }
-        if ( $params->{ contents }->{ $filename } ) {
+        if ( $params->{ contents } && $params->{ contents }->{ $filename } ) {
             $data = $params->{ contents }->{ $filename };
         } else {
             open my $fh, "<$filename" or die "Can't open '$filename'.";
