@@ -563,7 +563,7 @@ sub upload {
             } else {
                 $item = $container_name . '/' . $path . $item;
             }
-            my $params = { force => 1 };
+            $params->{ force } = 1;
             my $res = $blobService->upload( $item, $file, $params );
             push ( @responses, $res );
         }
