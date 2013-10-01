@@ -3,7 +3,7 @@ use base qw/Net::Azure::StorageClient/;
 use strict;
 use warnings;
 {
-  $Net::Azure::StorageClient::Blob::VERSION = '0.5';
+  $Net::Azure::StorageClient::Blob::VERSION = '0.6';
 }
 use File::Spec;
 use XML::Simple;
@@ -427,11 +427,21 @@ sub download {
             }
         }
         my @responses;
-        for my $key ( keys %$download_items ) {
-            $params->{ force } = 1;
-            my $res = $blobService->download( $container_name . '/' . $key,
-                                              $download_items->{ $key }, $params );
-            push ( @responses, $res );
+        if ( my $thread = $params->{ use_thread } ) {
+            require Net::Azure::StorageClient::Blob::Thread;
+            @responses = Net::Azure::StorageClient::Blob::Thread::dawnload_use_thread(
+              $blobService, 
+            { download_items => $download_items,
+              params => $params,
+              container_name => $container_name,
+              thread => $thread } );
+        } else {
+            for my $key ( keys %$download_items ) {
+                $params->{ force } = 1;
+                my $res = $blobService->download( $container_name . '/' . $key,
+                                                  $download_items->{ $key }, $params );
+                push ( @responses, $res );
+            }
         }
         if ( $params->{ sync } ) {
             my $not_remove = $params->{ not_remove };
@@ -544,6 +554,7 @@ sub upload {
             @upload_items = @$files;
         }
         my @responses;
+        my $uploads;
         for my $file ( @upload_items ) {
             if ( $excludes ) {
                 my $exclusion;
@@ -563,9 +574,21 @@ sub upload {
             } else {
                 $item = $container_name . '/' . $path . $item;
             }
-            $params->{ force } = 1;
-            my $res = $blobService->upload( $item, $file, $params );
-            push ( @responses, $res );
+            if ( $params->{ use_thread } ) {
+                $uploads->{ $item } = $file;
+            } else {
+                $params->{ force } = 1;
+                my $res = $blobService->upload( $item, $file, $params );
+                push ( @responses, $res );
+            }
+        }
+        if ( my $thread = $params->{ use_thread } ) {
+            require Net::Azure::StorageClient::Blob::Thread;
+            @responses = Net::Azure::StorageClient::Blob::Thread::upload_use_thread(
+              $blobService, 
+            { upload_items => $uploads,
+              params => $params,
+              thread => $thread } );
         }
         if ( $params->{ sync } ) {
             my $not_remove = $params->{ not_remove };

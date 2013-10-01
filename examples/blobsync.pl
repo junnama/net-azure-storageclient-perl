@@ -5,9 +5,11 @@ use Getopt::Long qw/:config posix_default no_ignore_case bundling auto_help/;
 use Pod::Usage qw/pod2usage/;
 use Net::Azure::StorageClient::Blob;
 use Data::Dumper;
+use threads;
+use Time::HiRes;  
 
-my $account_name = '';
-my $primary_access_key = '';
+my $account = '';
+my $accesskey = '';
 
 GetOptions(\my %options, qw/
     account=s
@@ -15,35 +17,41 @@ GetOptions(\my %options, qw/
     direction=s
     path=s
     directory=s
+    schema=s
     excludes=s
     include_invisible=i
     silence=i
     debug=i
+    use_thread=i
+    measure=i
 /) or pod2usage( 1 );
 
-$account_name = $options{ account } unless $account_name;
-$primary_access_key = $options{ accesskey } unless $primary_access_key;
+$account = $options{ account } unless $account;
+$accesskey = $options{ accesskey } unless $accesskey;
 my $direction = $options{ direction };
 my $directory = $options{ directory };
 my $path = $options{ path };
 my $excludes = $options{ excludes };
 my $include_invisible = $options{ 'include_invisible' };
 my $silence = $options{ silence };
+my $use_thread = $options{ use_thread };
+my $measure = $options{ measure };
 my $debug = $options{ debug };
+my $schema = $options{ schema } || 'https';
 
-if (! $account_name ) {
+if (! $account ) {
     print 'Please enter your account name of Windows Azure Blob Storage:';
-    $account_name = <STDIN>;
-    chomp( $account_name );
+    $account = <STDIN>;
+    chomp( $account );
 }
 
-if (! $primary_access_key ) {
+if (! $accesskey ) {
     print 'Please enter your primary access key of Windows Azure Blob Storage:';
-    $primary_access_key = <STDIN>;
-    chomp( $primary_access_key );
+    $accesskey = <STDIN>;
+    chomp( $accesskey );
 }
 
-if ( (! $account_name ) || (! $primary_access_key ) ) {
+if ( (! $account ) || (! $accesskey ) ) {
     die 
     'Your account and primary access key of Windows Azure Blob Storage are required.';
 }
@@ -57,15 +65,21 @@ if ( ( $direction ne 'upload' ) && ( $direction ne 'download' ) ) {
     die "Option '--direction' is 'upload' or 'download'.";
 }
 
-my $blobService = Net::Azure::StorageClient::Blob->new( account_name => $account_name,
-                                                        primary_access_key => $primary_access_key,
+my $blobService = Net::Azure::StorageClient::Blob->new( account_name => $account,
+                                                        primary_access_key => $accesskey,
+                                                        schema => $schema,
 );
 
 my $params = { direction => $direction };
 $params->{ include_invisible } = $include_invisible;
 my @exclude_items = split( /,/, $excludes ) if $excludes;
 $params->{ excludes } = \@exclude_items  if $excludes;
+$params->{ use_thread } = $use_thread;
+
+my $start = Time::HiRes::time;  
 my $res = $blobService->sync( $path, $directory, $params );
+my $score = sprintf( "%0.2f", Time::HiRes::time - $start ); 
+
 if (! $silence ) {
     if ( ( ref $res ) eq 'ARRAY' ) {
         if ( $debug ) {
@@ -97,6 +111,9 @@ if (! $silence ) {
             print "Blob did not synchronize.\n";
         }
     }
+    if ( $measure && (! $silence ) ) {
+        print "Processing time ${score} second.\n";
+    }
 }
 
 1;
@@ -110,10 +127,10 @@ Synchronize between the directory of blob storage and the local directory.
 =head1 SYNOPSIS
 
   upload
-    perl examples/blobsync.pl --account your_account --accesskey you_primary_access_key --direction upload --path container_name/directory_name --directory /path/to/local/directory [--excludes foo,bar --include_invisible 1 --silence 1 --debug 1]
+    perl examples/blobsync.pl --account your_account --accesskey you_primary_access_key --direction upload --path container_name/directory_name --directory /path/to/local/directory [--use_thread 10 --excludes foo,bar --include_invisible 1 --silence 1 --measure 1 --debug 1]
 
   download
-    perl examples/blobsync.pl --account your_account --accesskey you_primary_access_key --direction download --path container_name/directory_name --directory /path/to/local/directory [--excludes foo,bar --include_invisible 1 --silence 1 --debug 1]
+    perl examples/blobsync.pl --account your_account --accesskey you_primary_access_key --direction download --path container_name/directory_name --directory /path/to/local/directory [--use_thread 10 --excludes foo,bar --include_invisible 1 --silence 1 --measure 1 --debug 1]
 
 =head1 AUTHOR
 

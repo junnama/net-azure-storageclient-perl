@@ -6,8 +6,8 @@ use Pod::Usage qw/pod2usage/;
 use Net::Azure::StorageClient::Blob;
 use Data::Dumper;
 
-my $account_name = '';
-my $primary_access_key = '';
+my $account = '';
+my $accesskey = '';
 
 GetOptions(\my %options, qw/
     account=s
@@ -15,34 +15,36 @@ GetOptions(\my %options, qw/
     method=s
     url=s
     file=s
+    schema=s
     silence=i
     debug=i
 /) or pod2usage( 1 );
 
-$account_name = $options{ account } unless $account_name;
-$primary_access_key = $options{ accesskey } unless $primary_access_key;
+$account = $options{ account } unless $account;
+$accesskey = $options{ accesskey } unless $accesskey;
 my $method = $options{ method };
 my $url   = $options{ url };
 my $file  = $options{ file };
+my $schema = $options{ schema } || 'https';
 my $silence = $options{ silence };
 my $debug = $options{ debug };
 if (! $file ) {
     $file = {};
 }
 
-if (! $account_name ) {
+if (! $account ) {
     print 'Please enter your account name of Windows Azure Blob Storage:';
-    $account_name = <STDIN>;
-    chomp( $account_name );
+    $account = <STDIN>;
+    chomp( $account );
 }
 
-if (! $primary_access_key ) {
+if (! $accesskey ) {
     print 'Please enter your primary access key of Windows Azure Blob Storage:';
-    $primary_access_key = <STDIN>;
-    chomp( $primary_access_key );
+    $accesskey = <STDIN>;
+    chomp( $accesskey );
 }
 
-if ( (! $account_name ) || (! $primary_access_key ) ) {
+if ( (! $account ) || (! $accesskey ) ) {
     die 
     'Your account and primary access key of Windows Azure Blob Storage are required.';
 }
@@ -58,8 +60,9 @@ if (! $method ) {
     "Option '--method' is required.";
 }
 
-my $blobService = Net::Azure::StorageClient::Blob->new( account_name => $account_name,
-                                                        primary_access_key => $primary_access_key,
+my $blobService = Net::Azure::StorageClient::Blob->new( account_name => $account,
+                                                        primary_access_key => $accesskey,
+                                                        schema => $schema,
 );
 
 if (! $blobService->can( $method ) ) {
