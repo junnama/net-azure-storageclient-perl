@@ -3,7 +3,7 @@ use base qw/Net::Azure::StorageClient/;
 use strict;
 use warnings;
 {
-  $Net::Azure::StorageClient::Blob::VERSION = '0.7';
+  $Net::Azure::StorageClient::Blob::VERSION = '0.8';
 }
 use File::Spec;
 use XML::Simple;
@@ -386,8 +386,8 @@ sub download {
                 next if $exclusion;
             }
             my $real_name = $name;
-            $real_name =~ s/$prefix// if $prefix;
-            next if File::Basename::basename( $real_name ) eq '$$$.$$$';
+            $real_name =~ s/^$prefix// if $prefix;
+            next if _basename( $real_name, '/' ) eq '$$$.$$$';
             push ( @_blobs, $real_name );
             my $not_modified;
             my $rel_path = $name;
@@ -554,7 +554,7 @@ sub upload {
                         }
                     }
                 } else {
-                    if ( File::Basename::basename( $name ) ne '$$$.$$$' ) {
+                    if ( _basename( $name, '/' ) ne '$$$.$$$' ) {
                         push ( @removed_items, $name ) if ( $params->{ sync } );
                     }
                 }
@@ -639,8 +639,7 @@ sub sync {
     if ( $path !~ m!/$! ) {
         $path .= '/';
     }
-    my $separator = '/';
-    $separator = '\\' if $^O eq 'MSWin32';
+    my $separator = $^O eq 'MSWin32' ? '\\' : '/';
     if ( $directory !~ m!$separator$! ) {
         $directory .= $separator;
     }
@@ -880,7 +879,7 @@ sub _put {
     if ( $filename ) {
         $data = '';
         if ( -d $filename ) {
-            $filename = File::Spec->catfile( $filename, File::Basename::basename( $path ) );
+            $filename = File::Spec->catfile( $filename, _basename( $path, '/' ) );
         }
         if ( $params->{ contents } && $params->{ contents }->{ $filename } ) {
             $data = $params->{ contents }->{ $filename };
@@ -1004,7 +1003,7 @@ sub _get_directory_info {
             $path =~ s!^$container_name/!!;
         }
         return undef unless $container_name;
-        my $dir = File::Basename::dirname( $path );
+        my $dir = _basename( $path, '/', 'dirname' );
         if ( $dir eq '.' ) {
             $dir = $path;
         } else {
@@ -1041,8 +1040,8 @@ sub _get_directory_info {
         require File::Find;
         my $files;
         if ( -d $dirname ) {
-            my $sep = $^O eq 'MSWin32' ? '\\' : '/';
-            my $search_base = quotemeta( $dirname . $sep );
+            my $separator = $^O eq 'MSWin32' ? '\\' : '/';
+            my $search_base = quotemeta( $dirname . $separator );
             my $command = 'File::Find::find( sub { 
                 my $file = $File::Find::name;
                 $file =~ s/^$search_base//;
@@ -1070,14 +1069,14 @@ sub _get_directory_info {
 }
 
 sub _encode_path {
-    my ( $filename, $sep ) = @_;
+    my ( $filename, $separator ) = @_;
     Encode::_utf8_off( $filename );
     my @fileparse;
-    if (! $sep ) {
-        $sep = $^O eq 'MSWin32' ? '\\' : '/';
+    if (! $separator ) {
+        $separator = $^O eq 'MSWin32' ? '\\' : '/';
         @fileparse = File::Spec->splitdir( $filename );
     } else {
-        my $q = quotemeta( $sep );
+        my $q = quotemeta( $separator );
         @fileparse = split( /$q/, $filename );
     }
     my @paths;
@@ -1085,8 +1084,39 @@ sub _encode_path {
         $path =~ s!([^a-zA-Z0-9_.~-])!uc sprintf "%%%02x", ord($1)!eg;
         push ( @paths, $path );
     }
-    $filename = join( $sep, @paths );
+    $filename = join( $separator, @paths );
     return $filename;
+}
+
+sub _basename {
+    my ( $filename, $separator, $want ) = @_;
+    if (! $separator ) {
+        $separator = $^O eq 'MSWin32' ? '\\' : '/';
+    }
+    $want = 'basename' unless $want;
+    my $basename;
+    if ( ( ( $^O ne 'MSWin32' ) && ( $separator eq '/' ) ) ||
+       ( ( $^O eq 'MSWin32' ) && ( $separator eq '\\' ) ) ) {
+        if ( $want eq 'dirname' ) {
+            $basename = File::Basename::dirname( $filename );
+        } elsif ( $want eq 'basename' ) {
+            $basename = File::Basename::basename( $filename );
+        }
+    } else {
+        my $q = quotemeta( $separator );
+        $filename =~ s/$q$//;
+        my @fileparse = split( /$q/, $filename );
+        if ( $want eq 'dirname' ) {
+            pop @fileparse;
+            $basename = join( $separator, @fileparse );
+            if (! $basename ) {
+                $basename = '.';
+            }
+        } else {
+            $basename = pop @fileparse;
+        }
+    }
+    return $basename;
 }
 
 1;
