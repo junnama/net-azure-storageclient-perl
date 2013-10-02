@@ -88,7 +88,8 @@ if (! $silence ) {
             for my $obj ( @$res ) {
                 my $uri = $obj->base;
                 my $path = $uri->path;
-                print  $path . ',' . $obj->code . ',' . $obj->message . "\n";
+                my $meth = $obj->{ _request }->{ _method };
+                print  $meth . ',' . $path . ',' . $obj->code . ',' . $obj->message . "\n";
             }
         }
     } elsif ( ( ref $res ) eq 'HASH' ) {
@@ -100,10 +101,11 @@ if (! $silence ) {
             for my $obj ( @$responses ) {
                 my $uri = $obj->base;
                 my $path = $uri->path;
-                print  $path . ',' . $obj->code . ',' . $obj->message . "\n";
+                my $meth = $obj->{ _request }->{ _method };
+                print  $meth . ',' . $path . ',' . $obj->code . ',' . $obj->message . "\n";
             }
             for my $file ( @$removed_files ) {
-                print  $file . ",,Removed\n";
+                print  ',' . $file . ",,Removed\n";
             }
         }
     } elsif (! $res ) {

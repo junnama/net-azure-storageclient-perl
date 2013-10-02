@@ -8,6 +8,8 @@ use warnings;
 use File::Spec;
 use XML::Simple;
 use Digest::MD5;
+use Encode;
+use File::Basename;
 
 sub init {
     my $blobService = shift;
@@ -361,11 +363,16 @@ sub download {
         my @removed;
         my $prefix = quotemeta( $path );
         my $base = quotemeta( $filename );
-        require File::Basename;
         require HTTP::Date;
         my @_blobs;
         for my $blob ( @$blobs ) {
             my $name = $blob->{ Name };
+            if ( my $meta = $blob->{ Metadata } ) {
+                if ( my $original = $meta->{ Path } ) {
+                    $name = $original;
+                }
+            }
+            Encode::_utf8_off( $name );
             next if $prefix && ( $name !~ /^$prefix/ );
             if ( $excludes ) {
                 my $exclusion;
@@ -387,7 +394,8 @@ sub download {
             $rel_path =~ s/^$path// if $path;
             my $file = File::Spec->catfile( $filename, $rel_path );
             $file =~ s!/!\\!g if ( $^O eq 'MSWin32' );
-            if ( grep( /^$file$/, @$files ) ) {
+            my $q = quotemeta( $file );
+            if ( grep( /^$q$/, @$files ) ) {
                 if ( $params->{ conditional } || $params->{ sync } ) {
                     if ( -f $file ) {
                         my $etag;
@@ -416,12 +424,13 @@ sub download {
                     }
                 }
             }
-            $download_items->{ $name } = $file unless $not_modified;
+            $download_items->{ $blob->{ Name } } = $file unless $not_modified;
         }
         for my $item ( @$files ) {
             my $rel_path = $item;
             $rel_path =~ s!\\!/!g if ( $^O eq 'MSWin32' );
             $rel_path =~ s/^$base//;
+            $rel_path = quotemeta( $rel_path );
             if (! grep( /^$rel_path$/, @_blobs ) ) {
                 push ( @removed_items, $item );
             }
@@ -505,15 +514,20 @@ sub upload {
         my $prefix = quotemeta( $path );
         my $search_dir = quotemeta( $filename );
         if ( $params->{ conditional } || $params->{ sync } ) {
-            require File::Basename;
             for my $blob ( @$blobs ) {
                 my $name = $blob->{ Name };
+                if ( my $meta = $blob->{ Metadata } ) {
+                    if ( my $original = $meta->{ Path } ) {
+                        $name = $original;
+                    }
+                }
                 next if $prefix && ( $name !~ /^$prefix/ );
                 my $real_name = $name;
                 $real_name =~ s/$prefix// if $prefix;
                 my $file = File::Spec->catfile( $filename, $real_name );
                 $file =~ s!/!\\!g if ( $^O eq 'MSWin32' );
-                if ( grep( /^$file$/, @$files ) ) {
+                my $q = quotemeta( $file );
+                if ( grep( /^$q$/, @$files ) || ( -f $file ) ) {
                     if ( -f $file ) {
                         my $etag;
                         if ( my $meta = $blob->{ Metadata } ) {
@@ -530,7 +544,7 @@ sub upload {
                             $params->{ contents }->{ $filename } = $data;
                             my $comp = Digest::MD5::md5_hex( $data );
                             if ( $comp eq $etag ) {
-                                push ( @not_modified_items, $file );
+                                push ( @not_modified_items, _encode_path( $file ) );
                             }
                         } else {
                             my $mtime = $blobService->_get_mtime( $blob );
@@ -546,7 +560,8 @@ sub upload {
                 }
             }
             for my $item ( @$files ) {
-                if (! grep( /^$item$/, @not_modified_items ) ) {
+                my $q = quotemeta( _encode_path( $item ) );
+                if (! grep( /^$q$/, @not_modified_items ) ) {
                     push ( @upload_items, $item );
                 }
             }
@@ -804,11 +819,13 @@ sub _get {
     my $options = $params->{ options };
     $path .= $separator . $options if $options;
     $params->{ 'method' } = $method;
+    if ( $path =~ /\%/ ) {
+        $path = _encode_path( $path, '/' );
+    }
     my $res = $blobService->request( $method, $path, $params );
     if ( $filename ) {
         if ( $res->code == 200 ) {
             my $content = $res->content;
-            require File::Basename;
             my $dir = File::Basename::dirname( $filename );
             if (! -d $dir ) {
                 require File::Path;
@@ -863,7 +880,6 @@ sub _put {
     if ( $filename ) {
         $data = '';
         if ( -d $filename ) {
-            require File::Basename;
             $filename = File::Spec->catfile( $filename, File::Basename::basename( $path ) );
         }
         if ( $params->{ contents } && $params->{ contents }->{ $filename } ) {
@@ -898,6 +914,15 @@ sub _put {
         }
     }
     $params->{ body } = $data;
+    if ( $path =~ /\%/ ) {
+        my $encoded = _encode_path( $path );
+        if ( $encoded ne $path ) {
+            my $name = $path;
+            $name =~ s!^.*?/(.*)$!$1!;
+            $params->{ headers }->{ 'x-ms-meta-path' } = $name;
+            $path = $encoded;
+        }
+    }
     return $blobService->put( $path, $params );
 }
 
@@ -979,8 +1004,18 @@ sub _get_directory_info {
             $path =~ s!^$container_name/!!;
         }
         return undef unless $container_name;
+        my $dir = File::Basename::dirname( $path );
+        if ( $dir eq '.' ) {
+            $dir = $path;
+        } else {
+            $dir .= '/';
+        }
+        my $options = 'include=metadata';
+        if ( $dir ) {
+            $options .= '&prefix=' . $dir;
+        }
         my $blobs;
-        my $list_params = { options => 'include=metadata' };
+        my $list_params = { options => $options };
         my $res = $blobService->list( $container_name, $list_params );
         my $responses;
         if ( ( ref $res ) ne 'ARRAY' ) {
@@ -1032,6 +1067,26 @@ sub _get_directory_info {
         return $dir_info;
     }
     return undef;
+}
+
+sub _encode_path {
+    my ( $filename, $sep ) = @_;
+    Encode::_utf8_off( $filename );
+    my @fileparse;
+    if (! $sep ) {
+        $sep = $^O eq 'MSWin32' ? '\\' : '/';
+        @fileparse = File::Spec->splitdir( $filename );
+    } else {
+        my $q = quotemeta( $sep );
+        @fileparse = split( /$q/, $filename );
+    }
+    my @paths;
+    for my $path ( @fileparse ) {
+        $path =~ s!([^a-zA-Z0-9_.~-])!uc sprintf "%%%02x", ord($1)!eg;
+        push ( @paths, $path );
+    }
+    $filename = join( $sep, @paths );
+    return $filename;
 }
 
 1;
