@@ -3,7 +3,7 @@ use base qw/Net::Azure::StorageClient/;
 use strict;
 use warnings;
 {
-  $Net::Azure::StorageClient::Blob::VERSION = '0.6';
+  $Net::Azure::StorageClient::Blob::VERSION = '0.7';
 }
 use File::Spec;
 use XML::Simple;
@@ -1404,6 +1404,10 @@ Download a blob(or directory or container) and save to local file(s).
   my $params = { conditional => 1, sync => 1 [, include_invisible => 1 ] };
   my $res = $blobService->download( $path, $directory, $params );
 
+  # Using multi-thread.
+  my $params = { conditional => 1, sync => 1, use_thread => n(Count of thread) };
+  my $res = $blobService->download( $path, $directory, $params );
+
 =head3 upload
 
 Upload blob(s) from local file(s).
@@ -1418,12 +1422,20 @@ Upload blob(s) from local file(s).
   my $params = { conditional => 1, sync => 1 [, include_invisible => 1 ] };
   my $res = $blobService->upload( $path, $directory, $params );
 
+  # Using multi-thread.
+  my $params = { conditional => 1, sync => 1, use_thread => n(Count of thread) };
+  my $res = $blobService->upload( $path, $directory, $params );
+
 =head3 sync
 
 Synchronize between the directory of blob storage and the local directory.
 
   my $params = { direction => 'upload' [, include_invisible => 1 ] };
   my $res = $blobService->sync( $path, $directory, $params );
+
+  # Using multi-thread.
+  my $params = { direction => 'upload', use_thread => n(Count of thread) };
+  my $res = $blobService->upload( $path, $directory, $params );
 
 =head1 AUTHOR
 

@@ -1,4 +1,4 @@
-Net-Azure-StorageClient version 0.1
+Net-Azure-StorageClient version 0.2
 ====================================
 
 Net-Azure-StorageClient is Windows Azure Storage Client.
@@ -403,6 +403,10 @@ ABOUT Net::Azure::StorageClient::Blob
         my $perms = { conditional => 1, sync => 1 };
         my $res = $blobService->download( $path, $directory, $perms );
 
+        # Using multi-thread.
+        my $params = { conditional => 1, sync => 1, use_thread => n(Count of thread) };
+        my $res = $blobService->download( $path, $directory, $params );
+
       upload
 
         Upload blob(s) from local file(s).
@@ -417,12 +421,20 @@ ABOUT Net::Azure::StorageClient::Blob
         my $perms = { conditional => 1, sync => 1 };
         my $res = $blobService->upload( $path, $directory, $perms );
 
+        # Using multi-thread.
+        my $params = { conditional => 1, sync => 1, use_thread => n(Count of thread) };
+        my $res = $blobService->upload( $path, $directory, $params );
+
       sync
 
         Synchronize between the directory of blob storage and the local directory.
 
         my $params = { direction => 'upload' [, include_invisible => 1 ] };
         my $res = $blobService->sync( $path, $directory, $params );
+
+        # Using multi-thread.
+        my $params = { direction => 'upload', use_thread => n(Count of thread) };
+        my $res = $blobService->upload( $path, $directory, $params );
 
 AUTHOR
   Junnama Noda <junnama@alfasado.jp>
