@@ -447,8 +447,15 @@ sub download {
         } else {
             for my $key ( keys %$download_items ) {
                 $params->{ force } = 1;
-                my $res = $blobService->download( $container_name . '/' . $key,
-                                                  $download_items->{ $key }, $params );
+                my $item;
+                if (! $blobService->{ $container_name } ) {
+                    $item = $key;
+                } else {
+                    $item = $container_name . '/' . $key,
+                }
+                my $res = $blobService->download( $item,
+                                                  $download_items->{ $key },
+                                                  $params );
                 push ( @responses, $res );
             }
         }
@@ -521,6 +528,7 @@ sub upload {
                         $name = $original;
                     }
                 }
+                next if ( _basename( $name, '/' ) eq '$$$.$$$' );
                 next if $prefix && ( $name !~ /^$prefix/ );
                 my $real_name = $name;
                 $real_name =~ s/$prefix// if $prefix;
@@ -554,9 +562,7 @@ sub upload {
                         }
                     }
                 } else {
-                    if ( _basename( $name, '/' ) ne '$$$.$$$' ) {
-                        push ( @removed_items, $name ) if ( $params->{ sync } );
-                    }
+                    push ( @removed_items, $name ) if ( $params->{ sync } );
                 }
             }
             for my $item ( @$files ) {
@@ -859,10 +865,10 @@ sub _put {
     my $blobService = shift;
     my ( $path, $data, $params ) = @_;
     my $orig_path = $path;
-    $path = $blobService->_adjust_path( $path );
     if ( ref $data eq 'HASH' ) {
         $params = $data;
     }
+    $path = $blobService->_adjust_path( $path );
     my $filename = $params->{ filename };
     my $options = $params->{ options };
     $path .= '&' . $options if $options;
@@ -1001,6 +1007,9 @@ sub _get_directory_info {
             my @split_path = split( /\//, $path );
             $container_name = $split_path[ 0 ];
             $path =~ s!^$container_name/!!;
+        } else {
+            $path =~ s/^$container_name//;
+            $path =~ s!^/!!;
         }
         return undef unless $container_name;
         my $dir = _basename( $path, '/', 'dirname' );
