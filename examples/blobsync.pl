@@ -17,7 +17,7 @@ GetOptions(\my %options, qw/
     direction=s
     path=s
     directory=s
-    schema=s
+    protocol=s
     excludes=s
     include_invisible=i
     silence=i
@@ -37,7 +37,7 @@ my $silence = $options{ silence };
 my $use_thread = $options{ use_thread };
 my $measure = $options{ measure };
 my $debug = $options{ debug };
-my $schema = $options{ schema } || 'https';
+my $protocol = $options{ protocol } || 'https';
 
 if (! $account ) {
     print 'Please enter your account name of Windows Azure Blob Storage:';
@@ -67,7 +67,7 @@ if ( ( $direction ne 'upload' ) && ( $direction ne 'download' ) ) {
 
 my $blobService = Net::Azure::StorageClient::Blob->new( account_name => $account,
                                                         primary_access_key => $accesskey,
-                                                        schema => $schema,
+                                                        protocol => $protocol,
 );
 
 my $params = { direction => $direction };

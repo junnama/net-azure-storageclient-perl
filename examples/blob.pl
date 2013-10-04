@@ -15,7 +15,7 @@ GetOptions(\my %options, qw/
     method=s
     url=s
     file=s
-    schema=s
+    protocol=s
     silence=i
     debug=i
 /) or pod2usage( 1 );
@@ -25,7 +25,7 @@ $accesskey = $options{ accesskey } unless $accesskey;
 my $method = $options{ method };
 my $url   = $options{ url };
 my $file  = $options{ file };
-my $schema = $options{ schema } || 'https';
+my $protocol = $options{ protocol } || 'https';
 my $silence = $options{ silence };
 my $debug = $options{ debug };
 if (! $file ) {
@@ -62,7 +62,7 @@ if (! $method ) {
 
 my $blobService = Net::Azure::StorageClient::Blob->new( account_name => $account,
                                                         primary_access_key => $accesskey,
-                                                        schema => $schema,
+                                                        protocol => $protocol,
 );
 
 if (! $blobService->can( $method ) ) {

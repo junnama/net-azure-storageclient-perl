@@ -14,7 +14,7 @@ sub new {
     my $class = shift;
     my %args  = @_;
     my $type = $args{ type };
-    if ( $type && $type =~ /^Blob$/i ) { # |Table|Queue|SQL
+    if ( $type && $type =~ /^Blob$/i ) { # |Table|Queue
         $type = ucfirst( $type );
         $class .= "::" . $type;
         eval "use $class;";
@@ -31,7 +31,7 @@ sub init {
     $storageClient->{ account_name } = $args{ account_name };
     $storageClient->{ primary_access_key } = $args{ primary_access_key };
     $storageClient->{ api_version } = $args{ api_version } || '2012-02-12';
-    $storageClient->{ schema } = $args{ schema } || 'https';
+    $storageClient->{ protocol } = $args{ protocol } || 'https';
     return $storageClient;
 }
 
@@ -97,8 +97,8 @@ sub request {
         }
         my $type = $storageClient->{ type };
         my $account = $storageClient->{ account_name };
-        my $schema = $storageClient->{ schema };
-        $url = "${schema}://${account}.${type}.core.windows.net${url}";
+        my $protocol = $storageClient->{ protocol };
+        $url = "${protocol}://${account}.${type}.core.windows.net${url}";
     }
     my $body;
     if ( defined( $params->{ body } ) ) {
@@ -183,7 +183,7 @@ Net::Azure::StorageClient - Windows Azure Storage Client
                                     type => 'Blob',
                                     account_name => $you_account_name,
                                     primary_access_key => $your_primary_access_key,
-                                    [ schema => 'https', ]
+                                    [ protocol => 'https', ]
                                     [ api_version => '2012-02-12', ] );
 
 =head1 METHODS
@@ -205,8 +205,8 @@ Specifying the authorization header and send request.
     my $api = '/path/to/api?foo=bar';
     my $type = $blobService->{ type }; # 'blob'
     my $account = $blobService->{ account_name };
-    my $schema = $blobService->{ schema };
-    my $url = "${schema}://${account}.${type}.core.windows.net/${api}";
+    my $protocol = $blobService->{ protocol };
+    my $url = "${protocol}://${account}.${type}.core.windows.net/${api}";
     my $res = $StorageClient->request( 'GET', $url );
 
     # Request with custom http headers and request body. Send POST request.

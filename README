@@ -21,7 +21,7 @@ ABOUT Net::Azure::StorageClient
                                       type => 'Blob',
                                       account_name => $you_account_name,
                                       primary_access_key => $your_primary_access_key,
-                                      [ schema => 'https', ]
+                                      [ protocol => 'https', ]
                                       [ api_version => '2012-02-12', ] );
 
   METHODS
@@ -43,8 +43,8 @@ ABOUT Net::Azure::StorageClient
           my $api = '/path/to/api?foo=bar';
           my $type = $blobService->{ type }; # 'blob'
           my $account = $blobService->{ account_name };
-          my $schema = $blobService->{ schema };
-          my $url = "${schema}://${account}.${type}.core.windows.net/${api}";
+          my $protocol = $blobService->{ protocol };
+          my $url = "${protocol}://${account}.${type}.core.windows.net/${api}";
           my $res = $StorageClient->request( 'GET', $url );
 
           # Request with custom http headers and request body. Send POST request.
@@ -85,7 +85,7 @@ ABOUT Net::Azure::StorageClient::Blob
                                       account_name => $you_account_name,
                                       primary_access_key => $your_primary_access_key,
                                       [ container_name => $container_name, ]
-                                      [ schema => 'https', ] );
+                                      [ protocol => 'https', ] );
     my $path = 'path/to/blob';
     my $res = $blobService->get_blob( $path );
 

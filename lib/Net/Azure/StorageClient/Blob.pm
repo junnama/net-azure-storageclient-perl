@@ -226,12 +226,12 @@ sub copy_blob {
     $src = $blobService->_adjust_path( $src );
     my $data = '';
     my $account = $blobService->{ account_name };
-    my $schema = $blobService->{ schema };
+    my $protocol = $blobService->{ protocol };
     my $type = lc( $blobService->{ type } );
     my $options = $params->{ options };
     $path .= '?' . $options if $options;
     $data .= '?' . $options if $options;
-    my $url = "${schema}://${account}.${type}.core.windows.net/${src}";
+    my $url = "${protocol}://${account}.${type}.core.windows.net/${src}";
     $params->{ headers }->{ 'x-ms-copy-source' } = $url;
     $params->{ body } = $data;
     return $blobService->put( $path, $params );
@@ -1142,7 +1142,7 @@ Net::Azure::StorageClient::Blob - Interface to Windows Azure Blob Service
                                     account_name => $you_account_name,
                                     primary_access_key => $your_primary_access_key,
                                     [ container_name => $container_name, ]
-                                    [ schema => 'https', ] );
+                                    [ protocol => 'https', ] );
   my $path = 'path/to/blob';
   my $res = $blobService->get_blob( $path );
 

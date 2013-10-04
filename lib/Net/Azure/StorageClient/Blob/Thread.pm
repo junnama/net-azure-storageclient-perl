@@ -19,9 +19,15 @@ sub dawnload_use_thread {
     my $container_name = $args->{ container_name };
     my %th;
     for my $key ( keys %$download_items ) {
+        my $item;
+        if (! $blobService->{ $container_name } ) {
+            $item = $key;
+        } else {
+            $item = $container_name . '/' . $key,
+        }
         $th{ $key } = new threads(\&_download,
                                     $blobService,
-                                    $container_name . '/' . $key,
+                                    $item,
                                     $download_items->{ $key },
                                     $params,
                                     $semaphore );
