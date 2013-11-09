@@ -9,7 +9,7 @@ use warnings;
 use threads;
 use Thread::Semaphore;
 
-sub dawnload_use_thread {
+sub download_use_thread {
     my $blobService = shift;
     my ( $args ) = @_;
     my $thread = $args->{ thread } || 10;

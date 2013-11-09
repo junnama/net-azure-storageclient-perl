@@ -438,7 +438,7 @@ sub download {
         my @responses;
         if ( my $thread = $params->{ use_thread } ) {
             require Net::Azure::StorageClient::Blob::Thread;
-            @responses = Net::Azure::StorageClient::Blob::Thread::dawnload_use_thread(
+            @responses = Net::Azure::StorageClient::Blob::Thread::download_use_thread(
               $blobService, 
             { download_items => $download_items,
               params => $params,
