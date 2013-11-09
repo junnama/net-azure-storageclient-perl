@@ -1,7 +1,6 @@
 Changes
 lib/Net/Azure/StorageClient.pm
-lib/Net/Azure/StorageClient/blob.pm
-lib/Net/Azure/StorageClient/blobsync.pm
+lib/Net/Azure/StorageClient/Blob.pm
 lib/Net/Azure/StorageClient/MIMEType.pm
 examples/blob.pl
 examples/blobsync.pl
