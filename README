@@ -1,4 +1,4 @@
-Net-Azure-StorageClient version 0.2
+Net-Azure-StorageClient version 0.3
 ====================================
 
 Net-Azure-StorageClient is Windows Azure Storage Client.
@@ -109,7 +109,7 @@ ABOUT Net::Azure::StorageClient::Blob
       set_blob_service_properties
 
         The Set Blob Service Properties operation sets the properties of a
-        storage account’s Blob service, including Windows Azure Storage
+        storage account's Blob service, including Windows Azure Storage
         Analytics. You can also use this operation to set the default request
         version for all incoming requests that do not have a version specified.
         http://msdn.microsoft.com/en-us/library/windowsazure/hh452235.aspx
@@ -120,7 +120,7 @@ ABOUT Net::Azure::StorageClient::Blob
       get_blob_service_properties
 
         The Get Blob Service Properties operation gets the properties of a
-        storage account’s Blob service, including Windows Azure Storage
+        storage account's Blob service, including Windows Azure Storage
         Analytics.
         http://msdn.microsoft.com/en-us/library/windowsazure/hh452239.aspx
 

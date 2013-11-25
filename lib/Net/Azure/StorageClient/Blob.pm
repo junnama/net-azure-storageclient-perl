@@ -3,7 +3,7 @@ use base qw/Net::Azure::StorageClient/;
 use strict;
 use warnings;
 {
-  $Net::Azure::StorageClient::Blob::VERSION = '0.8';
+  $Net::Azure::StorageClient::Blob::VERSION = '0.9';
 }
 use File::Spec;
 use XML::Simple;
@@ -339,6 +339,7 @@ sub download_container {
     if ( $path !~ m!/$! ) {
         $path .= '/';
     }
+    $params->{ directory } = 1;
     return $blobService->download( $path, $dirname, $params );
 }
 
@@ -350,7 +351,10 @@ sub download_blob {
 sub download {
     my $blobService = shift;
     my ( $path, $filename, $params ) = @_;
-    my $dir_info = $blobService->_get_directory_info( $path, $filename, $params );
+    my $dir_info;
+    if ( $params->{ directory } || $path =~ m!/$! ) {
+        $dir_info = $blobService->_get_directory_info( $path, $filename, $params );
+    }
     if ( $dir_info ) {
         # Download blobs of directory
         my $excludes = $params->{ excludes } || $params->{ exclude };
@@ -453,6 +457,7 @@ sub download {
                 } else {
                     $item = $container_name . '/' . $key,
                 }
+                $params->{ directory } = undef;
                 my $res = $blobService->download( $item,
                                                   $download_items->{ $key },
                                                   $params );
@@ -652,6 +657,7 @@ sub sync {
     my $direction = $params->{ direction } || 'upload';
     $params->{ conditional } = 1;
     $params->{ sync } = 1;
+    $params->{ directory } = 1;
     return $blobService->$direction( $path, $directory, $params );
 }
 
@@ -816,7 +822,7 @@ sub _get {
     }
     my $method = $params->{ 'method' };
     my $separator = '?';
-    if ( ( $path !~ m!/! ) && ( $method eq 'HEAD' ) ) {
+    if ( ( $path !~ m!/! ) && ( $method && ( $method eq 'HEAD' ) ) ) {
         $path .= '?restype=container';
         $separator = '&';
     }
@@ -1164,7 +1170,7 @@ http://msdn.microsoft.com/en-us/library/windowsazure/dd179352.aspx
 
 =head3 set_blob_service_properties
 
-The Set Blob Service Properties operation sets the properties of a storage account’s Blob service,
+The Set Blob Service Properties operation sets the properties of a storage account's Blob service,
 including Windows Azure Storage Analytics.
 You can also use this operation to set the default request version for all incoming requests that
 do not have a version specified.
@@ -1175,7 +1181,7 @@ http://msdn.microsoft.com/en-us/library/windowsazure/hh452235.aspx
 
 =head3 get_blob_service_properties
 
-The Get Blob Service Properties operation gets the properties of a storage account’s Blob service,
+The Get Blob Service Properties operation gets the properties of a storage account's Blob service,
 including Windows Azure Storage Analytics.
 http://msdn.microsoft.com/en-us/library/windowsazure/hh452239.aspx
 

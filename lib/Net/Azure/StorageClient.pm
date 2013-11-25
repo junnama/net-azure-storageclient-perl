@@ -2,7 +2,7 @@ package Net::Azure::StorageClient;
 use strict;
 use warnings;
 {
-  $Net::Azure::StorageClient::VERSION = '0.2';
+  $Net::Azure::StorageClient::VERSION = '0.3';
 }
 use LWP::UserAgent;
 use HTTP::Date;
