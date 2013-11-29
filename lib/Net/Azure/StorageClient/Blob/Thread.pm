@@ -3,7 +3,7 @@ use base qw/Net::Azure::StorageClient::Blob/;
 use strict;
 use warnings;
 {
-  $Net::Azure::StorageClient::Blob::Thread::VERSION = '0.1';
+  $Net::Azure::StorageClient::Blob::Thread::VERSION = '0.11';
 }
 
 use threads;
@@ -20,7 +20,7 @@ sub download_use_thread {
     my %th;
     for my $key ( keys %$download_items ) {
         my $item;
-        if (! $blobService->{ $container_name } ) {
+        if ( $blobService->{ container_name } ) {
             $item = $key;
         } else {
             $item = $container_name . '/' . $key,

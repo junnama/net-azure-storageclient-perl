@@ -3,7 +3,7 @@ use base qw/Net::Azure::StorageClient/;
 use strict;
 use warnings;
 {
-  $Net::Azure::StorageClient::Blob::VERSION = '0.9';
+  $Net::Azure::StorageClient::Blob::VERSION = '0.91';
 }
 use File::Spec;
 use XML::Simple;
@@ -452,10 +452,10 @@ sub download {
             for my $key ( keys %$download_items ) {
                 $params->{ force } = 1;
                 my $item;
-                if (! $blobService->{ $container_name } ) {
+                if ( $blobService->{ container_name } ) {
                     $item = $key;
                 } else {
-                    $item = $container_name . '/' . $key,
+                    $item = $container_name . '/' . $key;
                 }
                 $params->{ directory } = undef;
                 my $res = $blobService->download( $item,

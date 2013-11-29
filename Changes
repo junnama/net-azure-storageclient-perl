@@ -10,3 +10,5 @@ Revision history for Perl extension Net::Azure::StorageClient.
 0.3  Sat Nov 25 15:33:00 2013
 	- Failed download when specify a file(not a directory).
 
+0.4  Fri Nov 29 16:56:00 2013
+	- Failed download when specify a directory.
