@@ -776,6 +776,9 @@ sub remove {
     my $blobService = shift;
     my ( $path, $params ) = @_;
     $path = $blobService->_adjust_path( $path );
+    if ( $path =~ /\%/ ) {
+        $path = _encode_path( $path, '/' );
+    }
     if ( $path !~ m!/! ) {
         return $blobService->delete_container( $path, $params );
     }
