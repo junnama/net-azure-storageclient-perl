@@ -351,7 +351,7 @@ sub download_blob {
 sub download {
     my $blobService = shift;
     my ( $path, $filename, $params ) = @_;
-    my $dir_info;
+    my $dir_info = '';
     if ( $params->{ directory } || $path =~ m!/$! ) {
         $dir_info = $blobService->_get_directory_info( $path, $filename, $params );
     }
@@ -512,7 +512,10 @@ sub upload_blob {
 sub upload {
     my $blobService = shift;
     my ( $path, $filename, $params ) = @_;
-    my $dir_info = $blobService->_get_directory_info( $path, $filename, $params );
+    my $dir_info = '';
+    if ( $params->{ directory } || $path =~ m!/$! ) {
+        $dir_info = $blobService->_get_directory_info( $path, $filename, $params );
+    }
     if ( $dir_info ) {
         # Upload files of directory
         my $excludes = $params->{ excludes } || $params->{ exclude };
