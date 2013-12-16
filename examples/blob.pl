@@ -14,6 +14,7 @@ GetOptions(\my %options, qw/
     accesskey=s
     method=s
     url=s
+    path=s
     file=s
     protocol=s
     silence=i
@@ -24,6 +25,9 @@ $account = $options{ account } unless $account;
 $accesskey = $options{ accesskey } unless $accesskey;
 my $method = $options{ method };
 my $url   = $options{ url };
+if (! $url ) {
+    $url = $options{ path };
+}
 my $file  = $options{ file };
 my $protocol = $options{ protocol } || 'https';
 my $silence = $options{ silence };
