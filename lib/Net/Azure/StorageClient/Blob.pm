@@ -3,7 +3,7 @@ use base qw/Net::Azure::StorageClient/;
 use strict;
 use warnings;
 {
-  $Net::Azure::StorageClient::Blob::VERSION = '0.91';
+  $Net::Azure::StorageClient::Blob::VERSION = '0.92';
 }
 use File::Spec;
 use XML::Simple;

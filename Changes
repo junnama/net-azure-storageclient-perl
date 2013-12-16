@@ -13,5 +13,7 @@ Revision history for Perl extension Net::Azure::StorageClient.
 0.4  Fri Nov 29 16:56:00 2013
 	- Failed download when specify a directory.
 
-0.5  Mon Dec 16 17:34:00 2013
+0.5  Mon Dec 16 20:22:00 2013
 	- Failed download when specify a directory using thread.
+        - Fixed example/blob.pl(—-path option).
+        - Fixed Blob.pm remove method(encode_path).
